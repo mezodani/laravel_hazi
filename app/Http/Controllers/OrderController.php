@@ -12,7 +12,7 @@ class OrderController extends Controller
      */
     public function index()
     {
-        return response()->json(Order::all());
+        return response()->json(Order::with('user')->get());
     }
 
     /**
@@ -24,8 +24,9 @@ class OrderController extends Controller
             "name" => "required|string|min:1|max:100",
             "user_id" => "required|exists:users,id"
         ]);
+
         $order = Order::create($validated);
-        return response()->json(["message" => "Order created successfully with ID: ".$order->id]);
+        return response()->json(["message" => "Order created successfully with ID: " . $order->id]);
     }
 
     /**
@@ -33,10 +34,12 @@ class OrderController extends Controller
      */
     public function show(string $id)
     {
-        $order = Order::find($id);
-        if(!$order) {
-            return response()->json(["message" => "Couldn't find order with ID: ".$id]);
+        $order = Order::with('user')->find($id);
+        
+        if (!$order) {
+            return response()->json(["message" => "Couldn't find order with ID: " . $id]);
         }
+        
         return response()->json($order);
     }
 
@@ -45,7 +48,20 @@ class OrderController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $order = Order::find($id);
+        
+        if (!$order) {
+            return response()->json(["message" => "Couldn't find order with ID: " . $id]);
+        }
+
+        $validated = $request->validate([
+            "name" => "sometimes|required|string|min:1|max:100",
+            "user_id" => "sometimes|required|exists:users,id"
+        ]);
+
+        $order->update($validated);
+        
+        return response()->json(["message" => "Order updated successfully with ID: " . $id]);
     }
 
     /**
@@ -54,10 +70,12 @@ class OrderController extends Controller
     public function destroy(string $id)
     {
         $order = Order::find($id);
-        if(!$order) {
-            return response()->json(["message" => "Couldn't find order with ID: ".$id]);
+        
+        if (!$order) {
+            return response()->json(["message" => "Couldn't find order with ID: " . $id]);
         }
+        
         Order::destroy($id);
-        return response()->json(["message" => "Order deleted successfully with ID: ".$id]);
+        return response()->json(["message" => "Order deleted successfully with ID: " . $id]);
     }
 }
